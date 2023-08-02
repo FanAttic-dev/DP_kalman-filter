@@ -2,19 +2,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as st
 
-# Source: https://www.kalmanfilter.net/kalman1d.html
+# Source: https://www.kalmanfilter.net/kalman1d_pn.html
 
-h = 50  # The true building height is 50 meters.
-n = 100
+n = 10
 
-# Human estimation error is about 15 meters.
-human_sigma = 15
-
-# The altimeter measurement error (standard deviation) is 5 meters.
-measurement_sigma = 10
+measurement_sigma = 0.1
 
 np.random.seed(42)
-Z = np.random.normal(h, measurement_sigma, n)
+true = np.linspace(50, 55, n)
+Z = true + np.random.normal(0, measurement_sigma, size=n)
 
 # Kalman filter
 
@@ -32,9 +28,10 @@ def get_confidence_interval(P, C):
     return ci
 
 
-x = 60  # Initial guess
-p = human_sigma**2
-r = 22**2  # measurement variance
+x = 10  # Initial guess
+p = 100**2
+r = measurement_sigma**2  # measurement variance
+q = 0.1
 X = np.zeros(n)
 P = np.zeros(n)
 K = np.zeros(n)
@@ -46,7 +43,7 @@ for i, z in enumerate(Z):  # measure
 
     # predict
     x = x_
-    p = p_
+    p = p_ + q
 
     X[i] = x
     P[i] = p
@@ -59,7 +56,7 @@ fig, ax = plt.subplots(2, 1)
 fig.set_size_inches(10, 8)
 ax[0].plot(np.arange(len(Z)), Z,
            '-*', label='Measurements', color="red")
-ax[0].plot(np.arange(len(Z)), np.repeat(h, n),
+ax[0].plot(np.arange(len(Z)), true,
            '-d', label="True values", color='green')
 ax[0].plot(np.arange(len(Z)), X,
            '-o', label="Estimated values", color='blue')
