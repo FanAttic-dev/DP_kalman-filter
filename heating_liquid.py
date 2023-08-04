@@ -31,7 +31,7 @@ def get_confidence_interval(P, C):
 x = 10  # Initial guess
 p = 100**2
 r = measurement_sigma**2  # measurement variance
-q = 0.1
+q = 0.001
 X = np.zeros(n)
 P = np.zeros(n)
 K = np.zeros(n)
