@@ -5,39 +5,37 @@ import matplotlib.pyplot as plt
 
 
 class KalmanFilter():
-    def __init__(self, dt, std_acc, std_measurement):
+    def __init__(self, dt, acc, std_acc, std_measurement):
         self.dt = dt
 
         self.x = np.matrix([
             [0],
-            [0]
+            [0],
+            [acc]
         ])
 
         self.A = np.matrix([
-            [1, dt],
-            [0, 1]
-        ])
-
-        self.B = np.matrix([
-            [dt**2 / 2],
-            [dt]
+            [1, dt, dt**2 / 2],
+            [0, 1, dt],
+            [0, 0, 1]
         ])
 
         self.H = np.matrix([
-            [1, 0]
+            [1, 0, 0]
         ])
 
         self.Q = np.matrix([
-            [dt**4 / 4, dt**3 / 2],
-            [dt**3 / 2, dt**2]
+            [dt**4 / 4, dt**3 / 2, dt**2 / 2],
+            [dt**3 / 2, dt**2, dt],
+            [dt**2 / 2, dt, 1]
         ]) * std_acc**2
 
         self.P = np.eye(self.A.shape[0])
 
         self.R = std_measurement**2
 
-    def predict(self, u):
-        self.x = np.dot(self.A, self.x) + np.dot(self.B, u)
+    def predict(self):
+        self.x = np.dot(self.A, self.x)
 
         # P = A * P * A' + Q
         self.P = np.dot(np.dot(self.A, self.P), self.A.T) + self.Q
@@ -61,37 +59,37 @@ class KalmanFilter():
 
 def main():
     dt = 0.1
-    n = 200
+    n = 100
     t = np.linspace(0, n, n)
 
     real_track = dt * (t**2 - t)
 
     acc = 2
     std_acc = .1  # [m/s^2]
-    std_measurement = 50  # [m]
+    std_measurement = 20  # [m]
 
     np.random.seed(42)
     measurements = real_track + np.random.normal(0, 50, size=n)
 
-    kf = KalmanFilter(dt, std_acc, std_measurement)
+    kf = KalmanFilter(dt, acc, std_acc, std_measurement)
 
     predictions = []
     kalman_gains = []
     for z in measurements:
-        x_ = kf.predict(u=acc)
+        x_ = kf.predict()
         predictions.append(x_[0].item())
 
         K = kf.update(z)
-        kalman_gains.append(K[0].item())
+        kalman_gains.append(K[2].item())
 
-    fig, ax = plt.subplots(2)
+    fig, ax = plt.subplots(2, 1)
     fig.set_size_inches(10, 8)
     ax[0].plot(t, real_track, label="True", color="green")
     ax[0].plot(t, measurements, label="Measured", color="red")
     ax[0].plot(t, predictions, label="Predicted", color="blue")
     ax[0].legend()
-    ax[1].plot(t, kalman_gains)
     ax[1].set_title("Kalman gain")
+    ax[1].plot(t, kalman_gains)
     plt.show()
 
 
