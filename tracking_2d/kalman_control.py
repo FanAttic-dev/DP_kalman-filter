@@ -4,6 +4,8 @@ import numpy as np
 class KalmanFilter():
     def __init__(self, dt, acc_x, acc_y, std_acc, std_measurement):
         self.dt = dt
+        self.acc_x = acc_x
+        self.acc_y = acc_y
 
         self.x = np.matrix([
             [0],  # x
@@ -47,7 +49,16 @@ class KalmanFilter():
 
         self.R = np.eye(self.H.shape[0]) * std_measurement**2
 
-    def predict(self):
+    @property
+    def u_dec(self):
+        return np.matrix([
+            [-self.x[1].item()],
+            [-self.x[3].item()]
+        ])
+
+    def predict(self, decelerate=False):
+        if decelerate:
+            self.u = self.u_dec
         self.x = np.dot(self.A, self.x) + np.dot(self.B, self.u)
 
         # P = A * P * A' + Q
@@ -72,3 +83,16 @@ class KalmanFilter():
         # P = (I - K * H) * P * (I - K * H)' + K * R * K
         self.P = np.dot(I_KH, np.dot(self.P, I_KH.T)) + KRK
         return K
+
+    def toggle_acceleration(self):
+        sgn = np.matrix([
+            [-np.sign(np.round(self.x[1].item()))],
+            [-np.sign(np.round(self.x[3].item()))]
+        ])
+        self.u = np.multiply(self.u, sgn)
+
+    def reset_acceleration(self):
+        self.u = np.matrix([
+            [self.acc_x],
+            [self.acc_y]
+        ])
