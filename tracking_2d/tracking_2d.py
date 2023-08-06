@@ -19,8 +19,13 @@ while True:
     circle = detector.detect(frame, False)
 
     x_pred, y_pred = kf.predict(decelerate=is_paused)
-    cv2.rectangle(frame, (int(x_pred - circle["radius"]), int(y_pred - circle["radius"])),
-                  (int(x_pred + circle["radius"]), int(y_pred + circle["radius"])), colors["blue"], thickness=2)
+    cv2.rectangle(
+        frame,
+        (int(x_pred - circle["radius"]), int(y_pred - circle["radius"])),
+        (int(x_pred + circle["radius"]), int(y_pred + circle["radius"])),
+        colors["blue"],
+        thickness=2
+    )
 
     if circle is not None and not is_paused:
         # Detected circle

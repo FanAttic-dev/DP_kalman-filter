@@ -112,7 +112,7 @@ class KalmanFilter(KalmanFilterBase):
         self.x = self.A @ self.x
 
         if decelerate:
-            print("Decelerating")
+            # print("Decelerating")
             self.set_acc(*(-self.vel * KalmanFilter.DECELERATION_RATE))
 
         # P = A * P * A' + Q
