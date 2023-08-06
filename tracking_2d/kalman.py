@@ -43,16 +43,16 @@ class KalmanFilterBase():
 class KalmanFilter(KalmanFilterBase):
     DECELERATION_RATE = 0.8
 
-    def __init__(self, dt, acc_x, acc_y, std_acc, std_measurement):
+    def __init__(self, dt, std_acc, std_measurement):
         self.dt = dt
 
         self.x = np.array([
             [0],  # x
             [0],  # x'
-            [acc_x],  # x''
+            [0],  # x''
             [0],  # y
             [0],  # y'
-            [acc_y]  # y''
+            [0]  # y''
         ])
 
         self.A = np.array([
@@ -69,18 +69,11 @@ class KalmanFilter(KalmanFilterBase):
             [0, 0, 0, 1, 0, 0]
         ])
 
-        self.Q = np.array([
-            [dt**4 / 4, dt**3 / 2, dt**2 / 2, 0, 0, 0],
-            [dt**3 / 2, dt**2, dt, 0, 0, 0],
-            [dt**2 / 2, dt, 1, 0, 0, 0],
-            [0, 0, 0, dt**4 / 4, dt**3 / 2, dt**2 / 2],
-            [0, 0, 0, dt**3 / 2, dt**2, dt],
-            [0, 0, 0, dt**2 / 2, dt, 1]
-        ]) * std_acc**2
+        self.set_Q(std_acc)
 
         self.P = np.eye(self.A.shape[1])
 
-        self.R = np.eye(self.H.shape[0]) * std_measurement**2
+        self.set_R(std_measurement)
 
         self.K = self.x
 
@@ -100,10 +93,24 @@ class KalmanFilter(KalmanFilterBase):
         self.x[2] = acc_x
         self.x[5] = acc_y
 
+    def set_R(self, std_measurement):
+        self.R = np.eye(self.H.shape[0]) * std_measurement**2
+
+    def set_Q(self, std_acc):
+        dt = self.dt
+        self.Q = np.array([
+            [dt**4 / 4, dt**3 / 2, dt**2 / 2, 0, 0, 0],
+            [dt**3 / 2, dt**2, dt, 0, 0, 0],
+            [dt**2 / 2, dt, 1, 0, 0, 0],
+            [0, 0, 0, dt**4 / 4, dt**3 / 2, dt**2 / 2],
+            [0, 0, 0, dt**3 / 2, dt**2, dt],
+            [0, 0, 0, dt**2 / 2, dt, 1]
+        ]) * std_acc**2
+
     def print(self):
         print((f"Pos x: {self.x[0].item():.2f}, "
                f"Vel x: {self.x[1].item():.2f}, "
-               f"Acc x: {self.x[2].item():.2f} "
+               f"Acc x: {self.x[2].item():.2f}, "
                f"P x: {self.P[0][0].item():.2f}, "
                f"K x: {self.K[0][0].item():.2f}"
                ))

@@ -15,6 +15,17 @@ def on_mouse_click(event, x, y, flags, param):
         mouse_pos = None
 
 
+def on_std_meas_trackbar_change(std_meas):
+    print(f"std_meas: {std_meas}")
+    kf.set_R(std_meas)
+
+
+def on_std_acc_trackbar_change(std_acc):
+    std_acc /= 100
+    print(f"std_acc: {std_acc}")
+    kf.set_Q(std_acc)
+
+
 def get_blank_frame():
     return np.zeros((H, W, D), np.uint8)
 
@@ -40,6 +51,8 @@ def draw_meas():
     )
 
 
+kf = KalmanFilter(dt=0.1, std_acc=0.1, std_measurement=50)
+
 frame = get_blank_frame()
 mouse_pos = (0, 0)
 
@@ -47,8 +60,11 @@ window_name = "Frame"
 window_flags = cv2.WINDOW_AUTOSIZE  # cv2.WINDOW_NORMAL
 cv2.namedWindow(window_name, window_flags)
 cv2.setMouseCallback(window_name, on_mouse_click)
+cv2.createTrackbar("std meas", window_name, 50,
+                   1000, on_std_meas_trackbar_change)
+cv2.createTrackbar("std acc", window_name, 50,
+                   1000, on_std_acc_trackbar_change)
 
-kf = KalmanFilter(dt=0.1, acc_x=0, acc_y=0, std_acc=0.1, std_measurement=50)
 
 while True:
     cv2.imshow(window_name, frame)
@@ -58,6 +74,7 @@ while True:
     kf.predict(decelerate=(not measurement_available))
 
     draw_pred()
+    # kf.print()
 
     if measurement_available:
         kf.update(*mouse_pos)
