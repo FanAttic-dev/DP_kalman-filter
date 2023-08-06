@@ -1,15 +1,9 @@
+from constants import colors
 import detector
 from kalman import KalmanFilter
 # from kalman_control import KalmanFilter
 
 import cv2
-
-
-colors = {
-    "yellow": (0, 191, 255),
-    "blue": (255, 0, 0),
-    "red": (0, 0, 255)
-}
 
 cap = cv2.VideoCapture("./tracking_2d/video/video_randomball.avi")
 kf = KalmanFilter(dt=0.1, acc_x=1, acc_y=1,
@@ -24,7 +18,7 @@ while True:
 
     circle = detector.detect(frame, False)
 
-    x_pred, y_pred = kf.predict()
+    x_pred, y_pred = kf.predict(decelerate=is_paused)
     cv2.rectangle(frame, (int(x_pred - circle["radius"]), int(y_pred - circle["radius"])),
                   (int(x_pred + circle["radius"]), int(y_pred + circle["radius"])), colors["blue"], thickness=2)
 
@@ -36,16 +30,13 @@ while True:
         kf.update(circle["x"], circle["y"])
 
     cv2.imshow('image', frame)
-
-    print(
-        f"X velocity: {kf.x[1].item()}, X acceleration: {kf.x[2].item()},P x: {kf.P[0, 0]}")
+    kf.print()
 
     key = cv2.waitKey(100)
     if key == ord('q'):
         break
-    elif key == ord('m'):
+    elif key == ord('n'):
         is_paused = not is_paused
-        kf.reset_acceleration()
 
     i += 1
 
