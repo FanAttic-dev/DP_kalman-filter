@@ -1,9 +1,10 @@
 import numpy as np
 import cv2
 from constants import colors
-from kalman import KalmanFilter
+from kalman import KalmanFilterAcc, KalmanFilterVel
 
 H, W, D = 512, 512, 3
+# H, W, D = 1000, 6500, 3
 CIRCLE_RADIUS = 10
 
 
@@ -16,6 +17,7 @@ def on_mouse_click(event, x, y, flags, param):
 
 
 def on_std_meas_trackbar_change(std_meas):
+    # std_meas /= 100
     print(f"std_meas: {std_meas}")
     kf.set_R(std_meas)
 
@@ -51,19 +53,21 @@ def draw_meas():
     )
 
 
-kf = KalmanFilter(dt=0.1, std_acc=0.1, std_measurement=50)
+kf = KalmanFilterAcc(dt=0.1, std_acc=0.1, std_measurement=50)
+# kf = KalmanFilterConstantVelocity(dt=0.1, std_acc=0.1, std_measurement=50)
 
 frame = get_blank_frame()
 mouse_pos = (0, 0)
 
 window_name = "Frame"
-window_flags = cv2.WINDOW_AUTOSIZE  # cv2.WINDOW_NORMAL
+# window_flags = cv2.WINDOW_NORMAL
+window_flags = cv2.WINDOW_AUTOSIZE
 cv2.namedWindow(window_name, window_flags)
 cv2.setMouseCallback(window_name, on_mouse_click)
-cv2.createTrackbar("std meas", window_name, 50,
-                   1000, on_std_meas_trackbar_change)
-cv2.createTrackbar("std acc", window_name, 50,
-                   1000, on_std_acc_trackbar_change)
+cv2.createTrackbar("std meas", window_name, 100,
+                   100, on_std_meas_trackbar_change)
+cv2.createTrackbar("std acc", window_name, 10,
+                   100, on_std_acc_trackbar_change)
 
 
 while True:

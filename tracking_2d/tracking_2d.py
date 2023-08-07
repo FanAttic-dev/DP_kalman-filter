@@ -1,12 +1,12 @@
 from constants import colors
 import detector
-from kalman import KalmanFilter
+from kalman import KalmanFilterAcc
 # from kalman_control import KalmanFilter
 
 import cv2
 
 cap = cv2.VideoCapture("./tracking_2d/video/video_randomball.avi")
-kf = KalmanFilter(dt=0.1, std_acc=1, std_measurement=10)
+kf = KalmanFilterAcc(dt=0.1, std_acc=1, std_measurement=10)
 
 i = 0
 is_paused = False
