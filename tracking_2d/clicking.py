@@ -17,7 +17,7 @@ def on_mouse_click(event, x, y, flags, param):
 
 
 def on_std_meas_trackbar_change(std_meas):
-    # std_meas /= 100
+    std_meas /= 10
     print(f"std_meas: {std_meas}")
     kf.set_R(std_meas)
 
@@ -53,8 +53,8 @@ def draw_meas():
     )
 
 
-kf = KalmanFilterAcc(dt=0.1, std_acc=0.1, std_measurement=50)
-# kf = KalmanFilterConstantVelocity(dt=0.1, std_acc=0.1, std_measurement=50)
+# kf = KalmanFilterAcc(dt=0.1, std_acc=0.1, std_measurement=50)
+kf = KalmanFilterVel(dt=0.1, std_acc=0.1, std_measurement=50)
 
 frame = get_blank_frame()
 mouse_pos = (0, 0)
@@ -78,7 +78,7 @@ while True:
     kf.predict(decelerate=(not measurement_available))
 
     draw_pred()
-    # kf.print()
+    kf.print()
 
     if measurement_available:
         kf.update(*mouse_pos)
