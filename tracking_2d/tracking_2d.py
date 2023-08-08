@@ -17,7 +17,8 @@ while True:
 
     circle = detector.detect(frame, False)
 
-    x_pred, y_pred = kf.predict(decelerate=is_paused)
+    kf.decelerate = is_paused
+    x_pred, y_pred = kf.predict()
     cv2.rectangle(
         frame,
         (int(x_pred - circle["radius"]), int(y_pred - circle["radius"])),

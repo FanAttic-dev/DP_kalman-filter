@@ -75,7 +75,8 @@ while True:
     frame = get_blank_frame()
     measurement_available = mouse_pos is not None
 
-    kf.predict(decelerate=(not measurement_available))
+    # kf.decelerate = not measurement_available
+    kf.predict()
 
     draw_pred()
     kf.print()
