@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 from constants import colors
 from kalman import KalmanFilterAcc, KalmanFilterVel
+from dynamics import Dynamics
 
 H, W, D = 512, 512, 3
 # H, W, D = 1000, 6500, 3
@@ -26,6 +27,18 @@ def on_std_acc_trackbar_change(std_acc):
     std_acc /= 100
     print(f"std_acc: {std_acc}")
     model.set_Q(std_acc)
+
+
+def on_alpha_trackbar_change(alpha):
+    alpha /= 100
+    print(f"alpha: {alpha}")
+    model.set_alpha(alpha)
+
+
+def on_dt_trackbar_change(dt):
+    dt /= 100
+    print(f"dt: {dt}")
+    model.set_dt(dt)
 
 
 def get_blank_frame():
@@ -54,7 +67,8 @@ def draw_meas():
 
 
 # model = KalmanFilterAcc(dt=0.1, std_acc=0.1, std_meas=50)
-model = KalmanFilterVel(dt=0.1, std_acc=0.1, std_meas=50)
+# model = KalmanFilterVel(dt=0.1, std_acc=0.1, std_meas=50)
+model = Dynamics(dt=0.1, alpha=0.01)
 
 frame = get_blank_frame()
 mouse_pos = (0, 0)
@@ -64,10 +78,14 @@ window_name = "Frame"
 window_flags = cv2.WINDOW_AUTOSIZE
 cv2.namedWindow(window_name, window_flags)
 cv2.setMouseCallback(window_name, on_mouse_click)
-cv2.createTrackbar("std meas", window_name, 100,
-                   100, on_std_meas_trackbar_change)
-cv2.createTrackbar("std acc", window_name, 10,
-                   100, on_std_acc_trackbar_change)
+# cv2.createTrackbar("std meas", window_name, 100,
+#                    100, on_std_meas_trackbar_change)
+# cv2.createTrackbar("std acc", window_name, 10,
+#                    100, on_std_acc_trackbar_change)
+cv2.createTrackbar("alpha", window_name, 10,
+                   100, on_alpha_trackbar_change)
+cv2.createTrackbar("dt", window_name, 10,
+                   100, on_dt_trackbar_change)
 
 
 while True:
