@@ -6,7 +6,7 @@ from kalman import KalmanFilterAcc
 import cv2
 
 cap = cv2.VideoCapture("./tracking_2d/video/video_randomball.avi")
-kf = KalmanFilterAcc(dt=0.1, std_acc=1, std_measurement=10)
+kf = KalmanFilterAcc(dt=0.1, std_acc=1, std_meas=10)
 
 i = 0
 is_paused = False

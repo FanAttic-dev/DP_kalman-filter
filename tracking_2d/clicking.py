@@ -19,13 +19,13 @@ def on_mouse_click(event, x, y, flags, param):
 def on_std_meas_trackbar_change(std_meas):
     std_meas /= 10
     print(f"std_meas: {std_meas}")
-    kf.set_R(std_meas)
+    model.set_R(std_meas)
 
 
 def on_std_acc_trackbar_change(std_acc):
     std_acc /= 100
     print(f"std_acc: {std_acc}")
-    kf.set_Q(std_acc)
+    model.set_Q(std_acc)
 
 
 def get_blank_frame():
@@ -33,7 +33,7 @@ def get_blank_frame():
 
 
 def draw_pred():
-    pred_x, pred_y = kf.pos
+    pred_x, pred_y = model.pos
     cv2.rectangle(
         frame,
         (int(pred_x - CIRCLE_RADIUS), int(pred_y - CIRCLE_RADIUS)),
@@ -53,8 +53,8 @@ def draw_meas():
     )
 
 
-# kf = KalmanFilterAcc(dt=0.1, std_acc=0.1, std_measurement=50)
-kf = KalmanFilterVel(dt=0.1, std_acc=0.1, std_measurement=50)
+# model = KalmanFilterAcc(dt=0.1, std_acc=0.1, std_meas=50)
+model = KalmanFilterVel(dt=0.1, std_acc=0.1, std_meas=50)
 
 frame = get_blank_frame()
 mouse_pos = (0, 0)
@@ -76,13 +76,13 @@ while True:
     measurement_available = mouse_pos is not None
 
     # kf.decelerate = not measurement_available
-    kf.predict()
+    model.predict()
 
     draw_pred()
-    kf.print()
+    model.print()
 
     if measurement_available:
-        kf.update(*mouse_pos)
+        model.update(*mouse_pos)
         draw_meas()
 
     key = cv2.waitKey(0)
