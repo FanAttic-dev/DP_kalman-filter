@@ -5,10 +5,10 @@ from model import Model
 
 class KalmanFilterBase(Model):
     def __init__(self, dt, std_acc, std_meas):
+        super().__init__()
         self.dt = dt
         self.std_acc = std_acc
         self.std_meas = std_meas
-        self.set_decelerating(False)
         self.init_x()
         self.init_u()
         self.init_F()
@@ -23,6 +23,10 @@ class KalmanFilterBase(Model):
         # K = P * H' * inv(H * P * H' + R)
         S = np.linalg.inv(self.H @ self.P @ self.H.T + self.R)
         return self.P @ self.H.T @ S
+
+    @property
+    def K_x(self):
+        return self.K[0][0]
 
     def init_x(self):
         self.x = None
@@ -69,9 +73,11 @@ class KalmanFilterBase(Model):
         return self.pos
 
     def update(self, x_meas, y_meas):
+        self.set_last_measurement(x_meas, y_meas)
+
         z = np.array([
-            [x_meas],
-            [y_meas]
+            [np.array(x_meas).item()],
+            [np.array(y_meas).item()]
         ])
 
         K = self.K
@@ -138,7 +144,7 @@ class KalmanFilterVel(KalmanFilterBase):
             "Pos": [f"{self.x[0].item():.2f}", f"{self.x[2].item():.2f}"],
             "Vel": [f"{self.x[1].item():.2f}", f"{self.x[3].item():.2f}"],
             "P x": f"{self.P[0][0].item():.2f}",
-            "K x": f"{self.K[0][0].item():.2f}",
+            "K x": f"{self.K_x.item():.2f}",
         })
         return stats
 
@@ -214,7 +220,7 @@ class KalmanFilterAcc(KalmanFilterBase):
             "Vel": [f"{self.x[1].item():.2f}", f"{self.x[4].item():.2f}"],
             "Acc": [f"{self.x[2].item():.2f}", f"{self.x[5].item():.2f}"],
             "P x": f"{self.P[0][0].item():.2f}",
-            "K x": f"{self.K[0][0].item():.2f}",
+            "K x": f"{self.K_x.item():.2f}",
         })
         return stats
 
@@ -316,7 +322,7 @@ class KalmanFilterAccCtrl(KalmanFilterBase):
             "Vel": [f"{self.x[1].item():.2f}", f"{self.x[3].item():.2f}"],
             "U_acc": [f"{self.u[0].item():.2f}", f"{self.u[1].item():.2f}"],
             "P x": f"{self.P[0][0].item():.2f}",
-            "K x": f"{self.K[0][0].item():.2f}",
+            "K x": f"{self.K_x.item():.2f}",
         })
         return stats
 
