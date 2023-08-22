@@ -37,7 +37,7 @@ class KalmanFilter():
     def predict(self):
         self.x = np.dot(self.A, self.x)
 
-        # P = A * P * A' + Q
+        # P = F * P * F' + Q
         self.P = np.dot(np.dot(self.A, self.P), self.A.T) + self.Q
 
         return self.x

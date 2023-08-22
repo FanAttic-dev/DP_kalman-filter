@@ -10,7 +10,6 @@ class KalmanFilterBase(Model):
         self.std_acc = std_acc
         self.std_meas = std_meas
         self.init_x()
-        self.init_u()
         self.init_F()
         self.init_G()
         self.init_H()
@@ -30,9 +29,6 @@ class KalmanFilterBase(Model):
 
     def init_x(self):
         self.x = None
-
-    def init_u(self):
-        self.u = None
 
     def init_F(self):
         self.F = None
@@ -67,7 +63,7 @@ class KalmanFilterBase(Model):
     def predict(self):
         self.x = self.F @ self.x
 
-        # P = A * P * A' + Q
+        # P = F * P * F' + Q
         self.P = self.F @ self.P @ self.F.T + self.Q
 
         return self.pos
@@ -90,6 +86,8 @@ class KalmanFilterBase(Model):
 
 
 class KalmanFilterVel(KalmanFilterBase):
+    DECELERATION_RATE = 0.1
+
     def __init__(self, dt, std_acc, std_meas):
         super().__init__(dt, std_acc, std_meas)
 
@@ -100,6 +98,15 @@ class KalmanFilterVel(KalmanFilterBase):
     @property
     def vel(self):
         return np.array([self.x[1], self.x[3]])
+
+    @property
+    def u(self):
+        if self.is_decelerating:
+            return -self.vel * KalmanFilterVel.DECELERATION_RATE
+        return np.array([
+            [0],
+            [0]
+        ])
 
     def init_x(self):
         self.x = np.array([
@@ -120,6 +127,15 @@ class KalmanFilterVel(KalmanFilterBase):
             [0, 1, 0, 0],
             [0, 0, 1, dt],
             [0, 0, 0, 1],
+        ])
+
+    def init_G(self):
+        dt = self.dt
+        self.G = np.array([
+            [dt**2 / 2, 0],
+            [dt, 0],
+            [0, dt**2 / 2],
+            [0, dt]
         ])
 
     def init_H(self):
@@ -143,6 +159,7 @@ class KalmanFilterVel(KalmanFilterBase):
             "Name": "KF Constant Velocity",
             "Pos": [f"{self.x[0].item():.2f}", f"{self.x[2].item():.2f}"],
             "Vel": [f"{self.x[1].item():.2f}", f"{self.x[3].item():.2f}"],
+            "u": [f"{self.u[0].item():.2f}", f"{self.u[1].item():.2f}"],
             "P x": f"{self.P[0][0].item():.2f}",
             "K x": f"{self.K_x.item():.2f}",
         })
@@ -150,6 +167,14 @@ class KalmanFilterVel(KalmanFilterBase):
 
     def print(self):
         print(self.get_stats())
+
+    def predict(self):
+        self.x = self.F @ self.x + self.G @ self.u
+
+        # P = F * P * F' + Q
+        self.P = self.F @ self.P @ self.F.T + self.Q
+
+        return self.pos
 
 
 class KalmanFilterAcc(KalmanFilterBase):
@@ -228,114 +253,9 @@ class KalmanFilterAcc(KalmanFilterBase):
         self.x = self.F @ self.x
 
         if self.is_decelerating:
-            print("Decelerating")
             self.set_acc(*(-self.vel * KalmanFilterAcc.DECELERATION_RATE))
 
-        # P = A * P * A' + Q
-        self.P = self.F @ self.P @ self.F.T + self.Q
-
-        return self.pos
-
-
-class KalmanFilterAccCtrl(KalmanFilterBase):
-    DECELERATION_RATE = 0.1
-
-    def __init__(self, dt, std_acc, std_meas, acc_x=0, acc_y=0):
-        self.acc_x = acc_x
-        self.acc_y = acc_y
-        super().__init__(dt, std_acc, std_meas)
-
-    @property
-    def u_dec(self):
-        return np.array([
-            [-self.x[1]],
-            [-self.x[3]]
-        ]) * KalmanFilterAccCtrl.DECELERATION_RATE
-
-    @property
-    def pos(self):
-        return np.array([self.x[0], self.x[2]])
-
-    @property
-    def vel(self):
-        return np.array([self.x[1], self.x[3]])
-
-    def set_pos(self, x, y):
-        self.x[0] = x
-        self.x[2] = y
-
-    def set_acc(self, acc_x, acc_y):
-        self.u = np.array([
-            [acc_x],
-            [acc_y]
-        ])
-
-    def init_x(self):
-        self.x = np.array([
-            [0],  # x
-            [0],  # x'
-            [0],  # y
-            [0],  # y'
-        ])
-
-    def init_u(self):
-        self.set_acc(self.acc_x, self.acc_y)
-
-    def init_F(self):
-        dt = self.dt
-        self.F = np.array([
-            [1, dt, 0, 0],
-            [0, 1, 0, 0],
-            [0, 0, 1, dt],
-            [0, 0, 0, 1],
-        ])
-
-    def init_G(self):
-        dt = self.dt
-        self.G = np.array([
-            [dt**2 / 2, 0],
-            [dt, 0],
-            [0, dt**2 / 2],
-            [0, dt]
-        ])
-
-    def init_H(self):
-        self.H = np.array([
-            [1, 0, 0, 0],
-            [0, 0, 1, 0]
-        ])
-
-    def init_Q(self):
-        dt = self.dt
-        self.Q = np.array([
-            [dt**4 / 4, dt**3 / 2, 0, 0],
-            [dt**3 / 2, dt**2, 0, 0],
-            [0, 0, dt**4 / 4, dt**3 / 2],
-            [0, 0, dt**3 / 2, dt**2],
-        ]) * self.std_acc**2
-
-    def get_stats(self):
-        stats = super().get_stats()
-        stats.update({
-            "Name": "KF Acceleration Control",
-            "Pos": [f"{self.x[0].item():.2f}", f"{self.x[2].item():.2f}"],
-            "Vel": [f"{self.x[1].item():.2f}", f"{self.x[3].item():.2f}"],
-            "U_acc": [f"{self.u[0].item():.2f}", f"{self.u[1].item():.2f}"],
-            "P x": f"{self.P[0][0].item():.2f}",
-            "K x": f"{self.K_x.item():.2f}",
-        })
-        return stats
-
-    def predict(self):
-        u = self.u
-
-        if self.is_decelerating:
-            print("Decelerating")
-            u = self.u_dec
-
-        self.x = self.F @ self.x + self.G @ u
-
-        # P = A * P * A' + Q
+        # P = F * P * F' + Q
         self.P = self.F @ self.P @ self.F.T + self.Q
 
         return self.pos
