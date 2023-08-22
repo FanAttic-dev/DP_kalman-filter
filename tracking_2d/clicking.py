@@ -70,8 +70,8 @@ def draw_meas():
 
 # model = KalmanFilterAcc(dt=0.1, std_acc=0.1, std_meas=10)
 # model = KalmanFilterVelCtrlAcc(dt=0.1, std_acc=0.1, std_meas=10)
-model = KalmanFilterVel(dt=0.1, std_acc=0.1, std_meas=50)
-# model = Dynamics(dt=0.1, alpha=0.01)
+# model = KalmanFilterVel(dt=0.1, std_acc=0.1, std_meas=50)
+model = Dynamics(dt=0.01, accel_rate=0.1, decel_rate=0.1)
 
 frame = get_blank_frame()
 mouse_pos = (0, 0)
